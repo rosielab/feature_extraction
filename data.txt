@@ -1,0 +1,10 @@
+Place data in folder with the following structure:
+feature_extraction\shout-data\shout-data\shout_data_00a0fb59-49f0-40e1-8481-6a334c65b126\final\chunka.wav
+with numerous folders after the second shout data.
+
+Built based on https://github.com/ehughson/voice_toolbox 
+
+Try using GMAPS or opensmile
+
+colour by emotion, shape by distance. features that don't change based on distance -> Looking for Distance robust features
+
