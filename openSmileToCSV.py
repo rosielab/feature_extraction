@@ -29,21 +29,39 @@ OUTPUT_CSV_FILE = './processed_data_with_features.csv'
 data_df = pd.read_csv(INPUT_CSV_FILE)
 
 # Slice the first 10 rows for testing
-data_df = data_df.head(10)  # This selects the first 10 rows
+# data_df = data_df.head(10)  # This selects the first 10 rows
 
 # Create an empty list to hold new rows with additional features
 new_rows = []
 
+# data_path = './shout-data'
+# audio_files = []
+# for root, dirs, files in os.walk(data_path):
+#     for file in files:
+#         if file.endswith('.wav'):  
+#             audio_files.append(os.path.join(root, file))
+# print(f"Total audio files found: {len(audio_files)}")
+
+
+print("Starting feature extraction...")
 # Iterate through each row in the input CSV
 for index, row in data_df.iterrows():
-    file = os.path.join("C:\\Users\\12364\\Desktop\\feature_extraction\\", row['file_location'])
+    file = os.path.join('./', row['file_location'].replace('\\', '/'))
+    print(file)
     
-    if file.endswith(".wav") and os.path.exists(file):
+    if os.path.exists(file) & file.endswith('.wav'):
+        print(f"Processing audio file: {file}")
         # Read the audio file
-        signal, sampling_rate = audiofile.read(
-            file,
-            always_2d=True  # Ensure the output is always 2D
-        )
+        try: 
+            signal, sampling_rate = audiofile.read(
+                file,
+                always_2d=True  # Ensure the output is always 2D
+            )
+            print(f"Read audio file successfully: {file}")
+        except Exception as e:
+            print(f"Error reading audio file: {file}")
+            print(e)
+            continue
 
         # Initialize OpenSMILE
         smile = opensmile.Smile(
