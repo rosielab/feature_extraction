@@ -73,11 +73,14 @@ plt.tight_layout()
 plt.savefig(os.path.join(results_folder, 'heatmap_feature_averages.png'), bbox_inches='tight')
 plt.close()
 
-def create_and_save_radar_plot(data, categories, title, filename):
+def create_radar_plot_emotion(data, categories, title, filename):
     num_vars = len(categories)
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]  # Complete the circle
     
+    # Number the axes
+    axis_labels = list(range(1, len(categories) + 1))
+
     fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(polar=True))
     unique_categories = data[category_column].unique()
     colors = plt.cm.tab10(range(len(unique_categories)))
@@ -89,11 +92,19 @@ def create_and_save_radar_plot(data, categories, title, filename):
         ax.fill(angles, values, alpha=0.25, color=color, label=row[category_column])
         ax.plot(angles, values, linewidth=2, color=color)
 
-    plt.xticks(angles[:-1], categories, color='grey', size=12)
+    plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
     ax.yaxis.grid(True)
     ax.set_ylim(-2.2, 2) # Adjust based on the data
     plt.title(title, size=16, y=1.1)
-    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
+    
+    # legend for emotions
+    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1)) 
+    
+    # legend for features
+    legend_elements = [f"{i}: {category}" for i, category in enumerate(categories, 1)]
+    legend_text = "\n".join(legend_elements)
+    plt.gcf().text(0.8, 0.2, legend_text, fontsize=10, va='center', bbox=dict(boxstyle="round", facecolor="white", alpha=0.5))
+
     plt.savefig(os.path.join(results_folder, filename),bbox_inches='tight')
     plt.close()
 
@@ -111,7 +122,7 @@ groupings = {
 # Generate radar plots for each grouping
 for group_name, emotions in groupings.items():
     group_data = normalized_data[normalized_data[category_column].isin(emotions)]
-    create_and_save_radar_plot(
+    create_radar_plot_emotion(
         group_data, features, f"Radar Plot: {group_name}", f"radar_plot_{group_name.lower().replace(' ', '_')}.png"
     )
 
@@ -163,6 +174,9 @@ def create_radar_plot_distance(data, categories, title, filename):
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1] 
 
+    # Number the axes
+    axis_labels = list(range(1, len(categories) + 1))
+
     # Sorting the groups to control legend order
     sorted_data = data.sort_values(by='distance_group', key=lambda x: x.map({
         'Next to Body': 1,
@@ -181,11 +195,17 @@ def create_radar_plot_distance(data, categories, title, filename):
         ax.plot(angles, values, linewidth=2, color=colors[i])
 
 
-    plt.xticks(angles[:-1], categories, color='grey', size=12)
+    plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
     ax.yaxis.grid(True)
     ax.set_ylim(-2, 1.7) # Adjust based on the data
     plt.title(title, size=16, y=1.1)
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), title="Distance Groups")
+
+    # legend for features
+    legend_elements = [f"{i}: {category}" for i, category in enumerate(categories, 1)]
+    legend_text = "\n".join(legend_elements)
+    plt.gcf().text(0.8, 0.2, legend_text, fontsize=10, va='center', bbox=dict(boxstyle="round", facecolor="white", alpha=0.5))
+
     plt.savefig(os.path.join(results_folder, filename), bbox_inches='tight')
     plt.close()
 
@@ -197,10 +217,13 @@ create_radar_plot_distance(
 )
 
 # Function to create radar plot for a single emotion
-def create_emotion_distance_radar(data, emotion, categories, title, filename):
+def create_radar_distance_per_emotion(data, emotion, categories, title, filename):
     num_vars = len(categories)
     angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
     angles += angles[:1]
+
+    # Number the axes
+    axis_labels = list(range(1, len(categories) + 1))
 
     # Sorting the groups to control legend order
     sorted_data = data.sort_values(by='distance_group', key=lambda x: x.map({
@@ -219,11 +242,17 @@ def create_emotion_distance_radar(data, emotion, categories, title, filename):
         ax.fill(angles, values, alpha=0.25, color=colors[i], label=row['distance_group'])
         ax.plot(angles, values, linewidth=2, color=colors[i])
 
-    plt.xticks(angles[:-1], categories, color='grey', size=12)
+    plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
     ax.yaxis.grid(True)
     ax.set_ylim(-2, 2)  # Adjust based on the data
     plt.title(f"{title} - {emotion}", size=16, y=1.1)
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), title="Distance Groups")
+    
+    # legend for features
+    legend_elements = [f"{i}: {category}" for i, category in enumerate(categories, 1)]
+    legend_text = "\n".join(legend_elements)
+    plt.gcf().text(0.8, 0.2, legend_text, fontsize=10, va='center', bbox=dict(boxstyle="round", facecolor="white", alpha=0.5))
+
     plt.savefig(os.path.join(results_folder, filename), bbox_inches='tight')
     plt.close()
 
@@ -244,7 +273,7 @@ for emotion in unique_emotions:
     normalized_emotion_data = pd.concat([emotion_distance_group_data['distance_group'], normalized_emotion_features], axis=1)
 
     # Create radar plot for the emotion
-    create_emotion_distance_radar(
+    create_radar_distance_per_emotion(
         normalized_emotion_data,
         emotion,
         features,
@@ -301,3 +330,91 @@ scatter_plot_gemaps(
     "Scatter Plot of GeMAPS Features (Colored by Emotion, Shaped by Distance)", 
     "scatter_plot_gemaps_emotion_distance.png"
 )
+
+def create_radar_emotions_per_distance(data, categories, distance_group, title, filename):
+    num_vars = len(categories)
+    angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+    angles += angles[:1]  # Complete the circle
+
+    # Number the axes
+    axis_labels = list(range(1, len(categories) + 1))
+
+    fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(polar=True))
+    unique_categories = data[category_column].unique()
+    colors = plt.cm.tab10(range(len(unique_categories)))
+
+    for i, row in data.iterrows():
+        values = row.drop(category_column).values.flatten().tolist()
+        values += values[:1]
+        color = colors[list(unique_categories).index(row[category_column])]
+        ax.fill(angles, values, alpha=0.25, color=color, label=row[category_column])
+        ax.plot(angles, values, linewidth=2, color=color)
+
+    plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
+    ax.yaxis.grid(True)
+    ax.set_ylim(-2.2, 2)  # Adjust based on the data
+    plt.title(f"{title} - {distance_group}", size=16, y=1.1)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), title="Emotions")
+
+    # legend for features
+    legend_elements = [f"{i}: {category}" for i, category in enumerate(categories, 1)]
+    legend_text = "\n".join(legend_elements)
+    plt.gcf().text(0.8, 0.2, legend_text, fontsize=10, va='center', bbox=dict(boxstyle="round", facecolor="white", alpha=0.5))
+
+    plt.savefig(os.path.join(results_folder, filename), bbox_inches='tight')
+    plt.close()
+
+# Loop through each distance group and create a radar plot for each
+distance_groups = data['distance_group'].unique()
+
+for group in distance_groups:
+    # Filter data for the specific distance group
+    group_data = data[data['distance_group'] == group]
+
+    # High Arousal Emotions
+    high_arousal_data = group_data[group_data[category_column].isin(groupings['High Arousal'])]
+    if not high_arousal_data.empty:
+        # Group by emotion and calculate mean feature values
+        high_arousal_grouped = high_arousal_data.groupby(category_column)[features].mean().reset_index()
+        
+        # Normalize the data for radar plotting
+        normalized_high_arousal_features = pd.DataFrame(
+            scaler.fit_transform(high_arousal_grouped[features]),
+            columns=features
+        )
+        normalized_high_arousal_data = pd.concat(
+            [high_arousal_grouped[category_column], normalized_high_arousal_features], axis=1
+        )
+
+        # Create radar plot for high arousal
+        create_radar_emotions_per_distance(
+            normalized_high_arousal_data,
+            features,
+            group,
+            "Radar Plot of Features by High Arousal Emotions",
+            f"radar_plot_high_arousal_{group.lower().replace(' ', '_')}.png"
+        )
+
+    # Low Arousal Emotions
+    low_arousal_data = group_data[group_data[category_column].isin(groupings['Low Arousal'])]
+    if not low_arousal_data.empty:
+        # Group by emotion and calculate mean feature values
+        low_arousal_grouped = low_arousal_data.groupby(category_column)[features].mean().reset_index()
+        
+        # Normalize the data for radar plotting
+        normalized_low_arousal_features = pd.DataFrame(
+            scaler.fit_transform(low_arousal_grouped[features]),
+            columns=features
+        )
+        normalized_low_arousal_data = pd.concat(
+            [low_arousal_grouped[category_column], normalized_low_arousal_features], axis=1
+        )
+
+        # Create radar plot for low arousal
+        create_radar_emotions_per_distance(
+            normalized_low_arousal_data,
+            features,
+            group,
+            "Radar Plot of Features by Low Arousal Emotions",
+            f"radar_plot_low_arousal_{group.lower().replace(' ', '_')}.png"
+        )
