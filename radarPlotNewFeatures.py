@@ -99,7 +99,8 @@ def create_radar_plot_emotion(data, categories, title, filename):
 
     plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
     ax.yaxis.grid(True)
-    ax.set_ylim(-2.2, 2)  # Adjust based on the data
+    ax.set_ylim(-1.5, 2.5)  # Adjust based on the data
+    ax.set_yticks([-1.5,-1.0,-0.5, 0, 0.5, 1.0, 1.5, 2.0, 2.5])  # Fixed ticks at -1.5, 0, and 2.5
     plt.title(title, size=16, y=1.1)
     
     # legend for emotions
@@ -183,7 +184,8 @@ def create_radar_plot_distance(data, categories, title, filename):
 
     plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
     ax.yaxis.grid(True)
-    ax.set_ylim(-2, 1.7)  # Adjust based on the data
+    ax.set_ylim(-1.5, 2.5)  # Adjust based on the data
+    ax.set_yticks([-1.5,-1.0,-0.5, 0, 0.5, 1.0, 1.5, 2.0, 2.5])  # Fixed ticks at -1.5, 0, and 2.5
     plt.title(title, size=16, y=1.1)
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), title="Distance Groups")
 
@@ -192,6 +194,85 @@ def create_radar_plot_distance(data, categories, title, filename):
 
 # Create radar plot for distance groups
 create_radar_plot_distance(normalized_distance_data, FEATURES, "Radar Plot of Features by Phone Position Groups", "radar_plot_distance_groups.png")
+
+#per emotion
+# Function to create radar plot for a single emotion
+def create_radar_distance_per_emotion(data, emotion, categories, title, filename):
+    num_vars = len(categories)
+    angles = [n / float(num_vars) * 2 * pi for n in range(num_vars)]
+    angles += angles[:1]
+
+    # Number the axes
+    axis_labels = list(range(1, len(categories) + 1))
+
+    # Sorting the groups to control legend order
+    sorted_data = data.sort_values(by='distance_group', key=lambda x: x.map({
+        'Next to Body': 1,
+        '1-2 m Away': 2,
+        'Other Side of Room': 3,
+        'Outside of Room': 4
+    }))
+
+    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))
+    colors = plt.cm.tab10(range(len(data)))
+
+    for i, row in sorted_data.iterrows():
+        values = row.drop('distance_group').values.flatten().tolist()
+        values += values[:1]
+        ax.fill(angles, values, alpha=0.25, color=colors[i], label=row['distance_group'])
+        ax.plot(angles, values, linewidth=2, color=colors[i])
+
+    plt.xticks(angles[:-1], axis_labels, color='grey', size=12)
+    ax.yaxis.grid(True)
+    ax.set_ylim(-1.5, 2.5)  # Adjust based on the data
+    ax.set_yticks([-1.5,-1.0,-0.5, 0, 0.5, 1.0, 1.5, 2.0, 2.5])  # Fixed ticks at -1.5, 0, and 2.5
+    plt.title(f"{title} - {emotion}", size=16, y=1.1)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), title="Distance Groups")
+    
+    # legend for features
+    legend_elements = [f"{i}: {category}" for i, category in enumerate(categories, 1)]
+    legend_text = "\n".join(legend_elements)
+    plt.gcf().text(0.8, 0.2, legend_text, fontsize=10, va='center', bbox=dict(boxstyle="round", facecolor="white", alpha=0.5))
+
+    plt.savefig(os.path.join(RESULTS_FOLDER, filename), bbox_inches='tight')
+    plt.close()
+
+unique_emotions = data['emotion'].unique()
+
+for emotion in unique_emotions:
+    # Skip if the emotion is NaN
+    if pd.isna(emotion):
+        continue
+
+    # Filter data for the specific emotion
+    emotion_data = data[data['emotion'] == emotion]
+    
+    # Group by distance_group and calculate mean feature values
+    emotion_distance_group_data = emotion_data.groupby('distance_group')[FEATURES].mean().reset_index()
+
+    # Check if the grouped data is empty
+    if emotion_distance_group_data.empty:
+        print(f"Warning: No data available for emotion: {emotion}")
+        continue  # Skip to the next emotion
+    
+    # Normalize the data for radar plotting
+    normalized_emotion_features = pd.DataFrame(
+        scaler.fit_transform(emotion_distance_group_data[FEATURES]),
+        columns=FEATURES
+    )
+    normalized_emotion_data = pd.concat([emotion_distance_group_data['distance_group'], normalized_emotion_features], axis=1)
+
+    # Create radar plot for the emotion
+    create_radar_distance_per_emotion(
+        normalized_emotion_data,
+        emotion,
+        FEATURES,
+        "Radar Plot of Features by Phone Position",
+        f"radar_plot_distance_{emotion.lower().replace(' ', '_')}.png"
+    )
+
+
+
 
 # Scatter plot for PCA
 def scatter_plot_pca(data, features, title, filename):
