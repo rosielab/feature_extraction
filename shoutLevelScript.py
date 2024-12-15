@@ -2,7 +2,7 @@ import pandas as pd
 
 # Load the CSV files
 csv1 = pd.read_csv('./tidied_dataShoutLevels.csv')
-csv2 = pd.read_csv('./toolbox_features.csv')
+csv2 = pd.read_csv('./processed_data_with_features_2.csv')
 
 # Clean and standardize the 'shout_level' column
 csv1['shout_level'] = csv1['shout_level'].str.strip().str.lower()
@@ -20,7 +20,7 @@ csv1['file_location'] = csv1['file_location'].str.strip()
 csv2['file_location'] = csv2['file_location'].str.strip()
 
 # Merge CSVs on 'file_location'
-csv2 = pd.merge(csv2, csv1[['file_location', 'shout', 'affect', 'phone_position']], on='file_location', how='left')
+csv2 = pd.merge(csv2, csv1[['file_location', 'shout']], on='file_location', how='left')
 
 # Save the updated CSV2
 csv2.to_csv('updated_csv2.csv', index=False)
