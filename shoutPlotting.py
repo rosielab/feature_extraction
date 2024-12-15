@@ -20,7 +20,7 @@ for col in feature_columns:
 
 # Define high and low arousal emotions
 high_arousal_emotions = ['anger', 'fear', 'joy', 'surprise']
-low_arousal_emotions = ['neutral', 'sad', 'disgust']
+low_arousal_emotions = ['neutral', 'sadness', 'disgust']
 
 # Filter for high and low arousal subsets
 high_arousal = df[df['emotion'].isin(high_arousal_emotions)]
